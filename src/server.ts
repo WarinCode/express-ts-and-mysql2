@@ -1,36 +1,57 @@
-import express, { Express, Request, Response, json, urlencoded } from "express";
+import express, {
+  Express,
+  Request,
+  Response,
+  NextFunction,
+  json,
+  urlencoded,
+} from "express";
 import { configDotenv } from "dotenv";
 import morgan from "morgan";
 import { ResultSetHeader } from "mysql2/promise";
 import connection from "./db/connection";
-import { Post, Params, ReqBody, ResBody, PatchParams } from "./types";
+import {
+  Post,
+  Params,
+  ReqBody,
+  ResBody,
+  PatchParams,
+  QueryString,
+} from "./types";
 
 configDotenv();
 const { SERVER_PORT }: NodeJS.ProcessEnv = process.env;
 const app: Express = express();
 const port: number = parseInt(<string>SERVER_PORT) || 4000;
- 
+
 app.use(json());
-app.use(urlencoded({ extended: true }));
+app.use(urlencoded({ extended: true, parameterLimit: 20 }));
 app.use(morgan("dev"));
 
-app.get("/", (req: Request, res: Response): void => {
+app.get("/", (req: Request, res: Response, next: NextFunction): void => {
   res.send("Hello world.");
 });
 
-app.get("/api/data", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const sql: string = "SELECT id, title, description, date FROM post;";
-    const [rows] = await connection.query<Post[]>(sql);
-    res.type("json").status(200).json(rows);
-  } catch (e: unknown) {
-    res.status(400).send(e);
+app.get(
+  "/api/data",
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const sql: string = "SELECT id, title, description, date FROM post;";
+      const [rows] = await connection.query<Post[]>(sql);
+      res.type("json").status(200).json(rows);
+    } catch (e: unknown) {
+      res.status(400).send(e);
+    }
   }
-});
+);
 
 app.get(
   "/api/data/id/:id",
-  async ({ params: { id } }: Request<Params>, res: Response): Promise<void> => {
+  async (
+    { params: { id } }: Request<Params>,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const sql: string = `SELECT id, title, description, date FROM post WHERE id = ${id};`;
       const [rows] = await connection.query<Post[]>(sql);
@@ -41,21 +62,25 @@ app.get(
   }
 );
 
-app.get("/api/data/all", async (req: Request, res: Response): Promise<void> => {
-  try {
-    const sql: string = "SELECT * FROM post;";
-    const [rows] = await connection.query<Post[]>(sql);
-    res.type("json").status(200).json(rows);
-  } catch (e: unknown) {
-    res.status(400).send(e);
+app.get(
+  "/api/data/all",
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const sql: string = "SELECT * FROM post;";
+      const [rows] = await connection.query<Post[]>(sql);
+      res.type("json").status(200).json(rows);
+    } catch (e: unknown) {
+      res.status(400).send(e);
+    }
   }
-});
+);
 
 app.get(
-  "/api/data/limit/:limit",
+  "/api/data/limit",
   async (
-    { params: { limit } }: Request<Params>,
-    res: Response
+    { query: { limit } }: Request<Params, any, any, QueryString>,
+    res: Response,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const sql: string = `SELECT id, title, description, date FROM post LIMIT ${limit};`;
@@ -71,7 +96,8 @@ app.post(
   "/api/insert",
   async (
     { body }: Request<Params, ResBody, ReqBody>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): Promise<void> => {
     const data = { ...body };
     data.id = data.id !== 0 ? data.id : 0;
@@ -93,7 +119,8 @@ app.put(
   "/api/update",
   async (
     { body }: Request<Params, ResBody, ReqBody>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const sql: string = `UPDATE post SET date = '${body.date}', author_id = ${body.author_id}, title = '${body.title}', description = '${body.description}', content = '${body.content}' WHERE id = ${body.id};`;
@@ -109,7 +136,8 @@ app.patch(
   "/api/update/id/:id/date=:date",
   async (
     { params: { id, date } }: Request<PatchParams>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const sql: string = `UPDATE post SET date = '${date}' WHERE id = ${id};`;
@@ -125,7 +153,8 @@ app.patch(
   "/api/update/id/:id/author_id=:author_id",
   async (
     { params: { id, author_id } }: Request<PatchParams>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const sql: string = `UPDATE post SET author_id = '${author_id}' WHERE id = ${id};`;
@@ -141,7 +170,8 @@ app.patch(
   "/api/update/id/:id/title=:title",
   async (
     { params: { id, title } }: Request<PatchParams>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const sql: string = `UPDATE post SET title = '${title}' WHERE id = ${id};`;
@@ -157,7 +187,8 @@ app.patch(
   "/api/update/id/:id/description=:description",
   async (
     { params: { id, description } }: Request<PatchParams>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const sql: string = `UPDATE post SET description = '${description}' WHERE id = ${id};`;
@@ -173,7 +204,8 @@ app.patch(
   "/api/update/id/:id/content=:content",
   async (
     { params: { id, content } }: Request<PatchParams>,
-    res: Response
+    res: Response,
+    next: NextFunction
   ): Promise<void> => {
     try {
       const sql: string = `UPDATE post SET content = '${content}' WHERE id = ${id};`;
@@ -187,7 +219,11 @@ app.patch(
 
 app.delete(
   "/api/delete/id/:id",
-  async ({ params: { id } }: Request<Params>, res: Response): Promise<void> => {
+  async (
+    { params: { id } }: Request<Params>,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
     try {
       const sql: string = `DELETE FROM post WHERE id = ${id};`;
       const [rows] = await connection.query<ResultSetHeader>(sql);

@@ -4,8 +4,7 @@
   "main": "src/server.js",
   "scripts": {
     "dev": "nodemon",
-    "build": "tsc",
-    "preview": "node dist/server.js"
+    "build": "tsc"
   },
   "type": "module",
   "keywords": [],

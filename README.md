@@ -19,10 +19,10 @@ cd express-ts-and-mysql2
 npm install
 ```
 
-4. สร้างฐานข้อมูลและสร้างตารางกำหนดค่า attribute แต่ละ field
+4. สร้างฐานข้อมูลและสร้างตารางกำหนดค่า attribute ในแต่ละ field
 ![img2](imgs/img2.png)
 
-5. นำไฟล์ post.json import เข้าไปใน table ที่เราสร้าง 
+5. นำไฟล์ [post.json](https://github.com/WarinCode/express-ts-and-mysql2/blob/main/src/db/data/post.json) ที่อยู่ในโปรเจค import เข้าไปใน table ที่เราสร้าง 
 ![img3](imgs/img3.png)
 ![img4](imgs/img4.png)
 

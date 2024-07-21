@@ -13,7 +13,7 @@ export interface QueryString {
     limit: string;
 }
 
-export interface Params extends QueryString{
+export interface Params {
     id: string;
 }
 
