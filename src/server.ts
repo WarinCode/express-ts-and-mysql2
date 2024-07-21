@@ -9,7 +9,7 @@ configDotenv();
 const { SERVER_PORT }: NodeJS.ProcessEnv = process.env;
 const app: Express = express();
 const port: number = parseInt(<string>SERVER_PORT) || 4000;
-
+ 
 app.use(json());
 app.use(urlencoded({ extended: true }));
 app.use(morgan("dev"));
