@@ -20,3 +20,4 @@ export interface Params {
 export interface PatchParams extends Post{}
 export interface ReqBody extends Post{}
 export interface ResBody extends ReqBody{}
+export type Posts = Post[];
