@@ -9,24 +9,29 @@ import {
   PatchParams,
 } from "../types";
 
-export default class PostController {
+export default class PostController<T extends Connection> {
   private sql: string = "";
   private rows: Post[] | ResultSetHeader = [];
-  public constructor(private readonly connection: Connection) {}
+  public constructor(
+    private readonly connection: T,
+    private readonly port: number
+  ) {}
 
   public sendHelloWorldMessage = (
-    req: Request,
+    { query: { limit, search } }: Request<Params, any, any, QueryString>,
     res: Response,
     next: NextFunction
   ): void => {
+    if (limit !== undefined || search !== undefined) return next();
     res.send("Hello World.");
   };
 
   public getData = async (
-    req: Request,
+    { query: { limit, search } }: Request<Params, any, any, QueryString>,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
+    if (limit !== undefined || search !== undefined) return next();
     try {
       this.sql = "SELECT id, title, description, date FROM post;";
       [this.rows] = await this.connection.query<Post[]>(this.sql);
@@ -37,10 +42,14 @@ export default class PostController {
   };
 
   public getDataById = async (
-    { params: { id } }: Request<Params>,
+    {
+      params: { id },
+      query: { limit, search },
+    }: Request<Params, any, any, QueryString>,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
+    if (limit !== undefined || search !== undefined) return next();
     try {
       this.sql = `SELECT id, title, description, date FROM post WHERE id = ${id};`;
       [this.rows] = await this.connection.query<Post[]>(this.sql);
@@ -51,10 +60,11 @@ export default class PostController {
   };
 
   public getAllData = async (
-    req: Request,
+    { query: { limit, search } }: Request<Params, any, any, QueryString>,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
+    if (limit !== undefined || search !== undefined) return next();
     try {
       this.sql = "SELECT * FROM post;";
       [this.rows] = await this.connection.query<Post[]>(this.sql);
@@ -65,12 +75,31 @@ export default class PostController {
   };
 
   public getLimitData = async (
-    { query: { limit } }: Request<Params, any, any, QueryString>,
+    { query: { limit, search } }: Request<Params, any, any, QueryString>,
     res: Response,
     next: NextFunction
   ): Promise<void> => {
+    if (search !== undefined) return next();
     try {
       this.sql = `SELECT id, title, description, date FROM post LIMIT ${limit};`;
+      [this.rows] = await this.connection.query<Post[]>(this.sql);
+      res.type("json").status(200).json(this.rows);
+    } catch (e: unknown) {
+      res.status(400).send(e);
+    }
+  };
+
+  public search = async (
+    { query: { search } }: Request<Params, any, any, QueryString>,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    search = search as string;
+    try {
+      this.sql = `SELECT id, title, description, date FROM post WHERE title IN("${search}") OR title LIKE "${search.substring(
+        0,
+        5
+      )}%";`;
       [this.rows] = await this.connection.query<Post[]>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
@@ -194,5 +223,25 @@ export default class PostController {
     } catch (e: unknown) {
       res.status(400).send(e);
     }
+  };
+
+  public notFoundPage = (
+    { baseUrl }: Request,
+    res: Response,
+    next: NextFunction
+  ): void => {
+    res
+      .type("html")
+      .status(404)
+      .send(
+        `Not found 404 in path: <b>${baseUrl}</b><br>Go back to <a href="/">homepage</a>`
+      );
+  };
+
+  public run = (): [port: number, callback: () => void] => {
+    return [
+      this.port,
+      (): void => console.log(`Server is runnig at http://localhost:${this.port}`),
+    ];
   };
 }

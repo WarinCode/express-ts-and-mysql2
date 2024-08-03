@@ -10,7 +10,8 @@ export interface Post extends RowDataPacket {
 }
 
 export interface QueryString {
-    limit: string;
+    limit?: string;
+    search?: string;
 }
 
 export interface Params {

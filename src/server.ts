@@ -1,8 +1,8 @@
 import express, { Express, json, urlencoded } from "express";
+import { Connection } from "mysql2/promise";
 import { configDotenv } from "dotenv";
 import morgan from "morgan";
 import connection from "./db/connection";
-import ApiEndpoints from "./apis/apiendpoint";
 import PostController from "./controllers/post.controller";
 
 configDotenv();
@@ -14,21 +14,23 @@ app.use(json());
 app.use(urlencoded({ extended: true, parameterLimit: 20 }));
 app.use(morgan("dev"));
 
-const postController: PostController = new PostController(connection);
+const postController: PostController<Connection> = new PostController(connection, port);
 app
-  .get(ApiEndpoints.RootPath, postController.sendHelloWorldMessage)
-  .get(ApiEndpoints.DataPath, postController.getData)
-  .get(ApiEndpoints.IDDataPath, postController.getDataById)
-  .get(ApiEndpoints.AllDataPath, postController.getAllData)
-  .get(ApiEndpoints.LimitDataPath, postController.getLimitData)
-  .post(ApiEndpoints.InsertPath, postController.insert)
-  .put(ApiEndpoints.UpdatePath, postController.update)
-  .patch(ApiEndpoints.UpdateDatePath, postController.updateDate)
-  .patch(ApiEndpoints.UpdateAuthorIdPath, postController.updateAuthorId)
-  .patch(ApiEndpoints.UpdateTitlePath, postController.updateTitle)
-  .patch(ApiEndpoints.UpdateDescriptionPath, postController.updateDescription)
-  .patch(ApiEndpoints.UpdateContentPath, postController.updateContent)
-  .delete(ApiEndpoints.DeletePath, postController.delete)
-  .listen(port, (): void =>
-    console.log(`Server is runnig at http://localhost:${port}`)
-  );
+  .get("/", postController.sendHelloWorldMessage)
+  .get("/api/data", postController.getData)
+  .get("/api/data/id/:id", postController.getDataById)
+  .get("/api/data/all", postController.getAllData)
+  //? /api/data/?limit=:limit
+  .get("/api/data/", postController.getLimitData) 
+  //? /api/data/?search=:search
+  .get("/api/data/", postController.search) 
+  .post("/api/insert", postController.insert)
+  .put("/api/update", postController.update)
+  .patch("/api/update/id/:id/date=:date", postController.updateDate)
+  .patch("/api/update/id/:id/author_id=:author_id", postController.updateAuthorId)
+  .patch("/api/update/id/:id/title=:title", postController.updateTitle)
+  .patch("/api/update/id/:id/description=:description", postController.updateDescription)
+  .patch("/api/update/id/:id/content=:content", postController.updateContent)
+  .delete("/api/delete/id/:id", postController.delete)
+  .use("*", postController.notFoundPage)
+  .listen(...postController.run());
