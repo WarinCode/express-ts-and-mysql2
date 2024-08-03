@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { Connection, ResultSetHeader } from "mysql2/promise";
 import {
-  Post,
+  Posts,
   Params,
   QueryString,
   ResBody,
@@ -9,9 +9,9 @@ import {
   PatchParams,
 } from "../types";
 
-export default class PostController<T extends Connection> {
+export default class PostController<T extends Connection, D extends Posts, A extends ResultSetHeader> {
   private sql: string = "";
-  private rows: Post[] | ResultSetHeader = [];
+  private rows: D | A | null = null;
   public constructor(
     private readonly connection: T,
     private readonly port: number
@@ -34,7 +34,7 @@ export default class PostController<T extends Connection> {
     if (limit !== undefined || search !== undefined) return next();
     try {
       this.sql = "SELECT id, title, description, date FROM post;";
-      [this.rows] = await this.connection.query<Post[]>(this.sql);
+      [this.rows] = await this.connection.query<D>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -52,7 +52,7 @@ export default class PostController<T extends Connection> {
     if (limit !== undefined || search !== undefined) return next();
     try {
       this.sql = `SELECT id, title, description, date FROM post WHERE id = ${id};`;
-      [this.rows] = await this.connection.query<Post[]>(this.sql);
+      [this.rows] = await this.connection.query<D>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -67,7 +67,7 @@ export default class PostController<T extends Connection> {
     if (limit !== undefined || search !== undefined) return next();
     try {
       this.sql = "SELECT * FROM post;";
-      [this.rows] = await this.connection.query<Post[]>(this.sql);
+      [this.rows] = await this.connection.query<D>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -82,7 +82,7 @@ export default class PostController<T extends Connection> {
     if (search !== undefined) return next();
     try {
       this.sql = `SELECT id, title, description, date FROM post LIMIT ${limit};`;
-      [this.rows] = await this.connection.query<Post[]>(this.sql);
+      [this.rows] = await this.connection.query<D>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -100,7 +100,7 @@ export default class PostController<T extends Connection> {
         0,
         5
       )}%";`;
-      [this.rows] = await this.connection.query<Post[]>(this.sql);
+      [this.rows] = await this.connection.query<D>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -120,7 +120,7 @@ export default class PostController<T extends Connection> {
     }-${now.getDate() < 9 ? "0" + now.getDate() : now.getDate()}`;
     try {
       this.sql = `INSERT INTO post VALUES(${data.id}, '${formatDate}', '${data.author_id}', ${data.title}, ${data.description}, ${data.content});`;
-      [this.rows] = await this.connection.query<ResultSetHeader>(this.sql);
+      [this.rows] = await this.connection.query<A>(this.sql);
       res.type("json").status(201).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -134,7 +134,7 @@ export default class PostController<T extends Connection> {
   ): Promise<void> => {
     try {
       this.sql = `UPDATE post SET date = '${body.date}', author_id = ${body.author_id}, title = '${body.title}', description = '${body.description}', content = '${body.content}' WHERE id = ${body.id};`;
-      [this.rows] = await this.connection.query<ResultSetHeader>(this.sql);
+      [this.rows] = await this.connection.query<A>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -148,7 +148,7 @@ export default class PostController<T extends Connection> {
   ): Promise<void> => {
     try {
       this.sql = `UPDATE post SET date = '${date}' WHERE id = ${id};`;
-      [this.rows] = await this.connection.query<ResultSetHeader>(this.sql);
+      [this.rows] = await this.connection.query<A>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -162,7 +162,7 @@ export default class PostController<T extends Connection> {
   ): Promise<void> => {
     try {
       this.sql = `UPDATE post SET author_id = '${author_id}' WHERE id = ${id};`;
-      [this.rows] = await this.connection.query<ResultSetHeader>(this.sql);
+      [this.rows] = await this.connection.query<A>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -176,7 +176,7 @@ export default class PostController<T extends Connection> {
   ): Promise<void> => {
     try {
       this.sql = `UPDATE post SET title = '${title}' WHERE id = ${id};`;
-      [this.rows] = await this.connection.query<ResultSetHeader>(this.sql);
+      [this.rows] = await this.connection.query<A>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -190,7 +190,7 @@ export default class PostController<T extends Connection> {
   ): Promise<void> => {
     try {
       this.sql = `UPDATE post SET description = '${description}' WHERE id = ${id};`;
-      [this.rows] = await this.connection.query<ResultSetHeader>(this.sql);
+      [this.rows] = await this.connection.query<A>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -204,7 +204,7 @@ export default class PostController<T extends Connection> {
   ): Promise<void> => {
     try {
       this.sql = `UPDATE post SET content = '${content}' WHERE id = ${id};`;
-      [this.rows] = await this.connection.query<ResultSetHeader>(this.sql);
+      [this.rows] = await this.connection.query<A>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);
@@ -218,7 +218,7 @@ export default class PostController<T extends Connection> {
   ): Promise<void> => {
     try {
       this.sql = `DELETE FROM post WHERE id = ${id};`;
-      [this.rows] = await this.connection.query<ResultSetHeader>(this.sql);
+      [this.rows] = await this.connection.query<A>(this.sql);
       res.type("json").status(200).json(this.rows);
     } catch (e: unknown) {
       res.status(400).send(e);

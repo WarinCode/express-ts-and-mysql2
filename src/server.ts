@@ -1,9 +1,10 @@
 import express, { Express, json, urlencoded } from "express";
-import { Connection } from "mysql2/promise";
+import { Connection, ResultSetHeader } from "mysql2/promise";
 import { configDotenv } from "dotenv";
 import morgan from "morgan";
 import connection from "./db/connection";
 import PostController from "./controllers/post.controller";
+import { Posts } from "./types";
 
 configDotenv();
 const { SERVER_PORT }: NodeJS.ProcessEnv = process.env;
@@ -14,7 +15,7 @@ app.use(json());
 app.use(urlencoded({ extended: true, parameterLimit: 20 }));
 app.use(morgan("dev"));
 
-const postController: PostController<Connection> = new PostController(connection, port);
+const postController: PostController<Connection, Posts, ResultSetHeader> = new PostController(connection, port);
 app
   .get("/", postController.sendHelloWorldMessage)
   .get("/api/data", postController.getData)
