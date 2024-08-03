@@ -33,5 +33,5 @@ app
   .patch("/api/update/id/:id/description=:description", postController.updateDescription)
   .patch("/api/update/id/:id/content=:content", postController.updateContent)
   .delete("/api/delete/id/:id", postController.delete)
-  .use("*", postController.notFoundPage)
+  .use("*", postController.pageNotFound)
   .listen(...postController.run());

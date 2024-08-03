@@ -225,7 +225,7 @@ export default class PostController<T extends Connection, D extends Posts, A ext
     }
   };
 
-  public notFoundPage = (
+  public pageNotFound = (
     { baseUrl }: Request,
     res: Response,
     next: NextFunction
